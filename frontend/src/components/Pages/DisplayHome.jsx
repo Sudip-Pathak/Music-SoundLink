@@ -469,6 +469,46 @@ const DisplayHome = () => {
             </div>
           </motion.div>
           
+          {/* Timely Advertisement Section (Graphic Format) */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
+            className="w-full my-6 md:my-10"
+          >
+            <div className="relative w-full h-40 md:h-56 rounded-2xl overflow-hidden shadow-2xl border border-neutral-800 bg-black group cursor-pointer">
+              {/* Graphic Advertisement Background Image */}
+              <img 
+                src="https://images.unsplash.com/photo-1614149162883-504ce4d13909?auto=format&fit=crop&q=80&w=1200&h=400" 
+                alt="Advertisement" 
+                className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-75 group-hover:scale-105 transition-all duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10"></div>
+              
+              {/* Ad Label */}
+              <div className="absolute top-3 right-4 z-20 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] text-white/60 border border-white/10 uppercase tracking-widest font-semibold">
+                Advertisement
+              </div>
+              
+              {/* Ad Content */}
+              <div className="relative z-20 flex flex-col items-start justify-center h-full p-6 md:p-10 max-w-lg">
+                <span className="text-fuchsia-400 text-xs md:text-sm font-bold tracking-widest uppercase mb-1 drop-shadow-md">
+                  Limited Time Offer
+                </span>
+                <h3 className="text-2xl md:text-4xl font-black text-white tracking-tight drop-shadow-lg mb-2 leading-tight">
+                  Experience Music <br/>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-pink-500">Without Limits</span>
+                </h3>
+                <p className="text-white/80 text-sm md:text-base font-medium mb-4 drop-shadow">
+                  Get 3 months of Premium for the price of 1.
+                </p>
+                <Link to="/premium" className="px-6 py-2.5 bg-white text-black font-bold text-sm rounded-full hover:bg-fuchsia-100 transition-colors shadow-[0_0_15px_rgba(255,255,255,0.3)] transform group-hover:-translate-y-1 duration-300">
+                  Claim Offer
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+          
           {/* Collections Section */}
           <motion.div 
             initial={{ opacity: 0, y: 40 }} 

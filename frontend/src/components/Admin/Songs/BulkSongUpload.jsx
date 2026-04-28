@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { MdMusicNote, MdFileUpload, MdEdit, MdImage, MdDownload } from "react-icons/md";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { parseBlob } from 'music-metadata-browser';
+import { AuthContext } from "../../../context/AuthContext";
 const url = import.meta.env.VITE_BACKEND_URL;
 
 // Export functionality for LRC files
@@ -50,6 +51,7 @@ const ExportLrcButton = ({ lyrics, songTitle }) => {
 };
 
 const BulkSongUpload = () => {
+  const { token } = useContext(AuthContext);
   const [albums, setAlbums] = useState([]);
   const [movieAlbums, setMovieAlbums] = useState([]);
   const [selectedAlbum, setSelectedAlbum] = useState("");
@@ -178,7 +180,10 @@ const BulkSongUpload = () => {
       if (songs[i].lyrics) formData.append("lyrics", songs[i].lyrics);
       try {
         await axios.post(`${url}/api/song/add`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${token}`,
+          },
           onUploadProgress: (progressEvent) => {
             const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             newProgress[i] = { percent, status: "uploading" };
@@ -249,7 +254,7 @@ const BulkSongUpload = () => {
         <label className="block text-white mb-2">Select Songs (multiple)</label>
         <input
           type="file"
-          accept="audio/*"
+          accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/flac,video/mp4,.mp3,.mp4,.wav,.ogg,.m4a,.flac,.aac"
           multiple
           className="hidden"
           id="bulk-audio-upload"
@@ -328,7 +333,8 @@ const BulkSongUpload = () => {
                   <label className="block text-white text-sm mb-1">Lyrics</label>
                   
                   {uploadProgress[idx]?.status !== "success" && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {/* Import .lrc lyrics file */}
                       <input
                         type="file"
                         id={`lrc-file-${idx}`}
@@ -358,7 +364,50 @@ const BulkSongUpload = () => {
                         <MdFileUpload size={14} />
                         Import .lrc
                       </label>
-                      
+
+                      {/* Import mp3 / mp4 audio to replace this song's file */}
+                      <input
+                        type="file"
+                        id={`import-audio-${idx}`}
+                        accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,video/mp4,.mp3,.mp4,.wav,.ogg,.m4a,.flac,.aac"
+                        hidden
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            const newFile = e.target.files[0];
+                            handleSongChange(idx, 'file', newFile);
+                            toast.success(`Audio replaced: ${newFile.name}`);
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`import-audio-${idx}`}
+                        className="text-xs flex items-center gap-1 px-2 py-1 bg-fuchsia-700 text-white rounded-md hover:bg-fuchsia-800 transition-colors cursor-pointer"
+                      >
+                        <MdFileUpload size={14} />
+                        Import Audio
+                      </label>
+
+                      {/* Import jpg / jpeg / png to replace this song's cover image */}
+                      <input
+                        type="file"
+                        id={`import-image-${idx}`}
+                        accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
+                        hidden
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleCoverChange(idx, e.target.files[0]);
+                            toast.success(`Cover image imported: ${e.target.files[0].name}`);
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor={`import-image-${idx}`}
+                        className="text-xs flex items-center gap-1 px-2 py-1 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors cursor-pointer"
+                      >
+                        <MdImage size={14} />
+                        Import Image
+                      </label>
+
                       {song.lyrics && (
                         <ExportLrcButton lyrics={song.lyrics} songTitle={song.title} />
                       )}

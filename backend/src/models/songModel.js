@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const songSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  desc: { type: String, required: true },
-  album: { type: String, required: true },
-  image: { type: String, required: true },
+  desc: { type: String, default: "" },
+  album: { type: String, default: "none" },
+  image: { type: String, default: "" },
   file: { type: String, required: true },
-  duration: { type: String, required: true },
+  duration: { type: String, default: "0:00" },
   artist: { type: mongoose.Schema.Types.ObjectId, ref: 'artist' },
   lyrics: { type: String, default: "" },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'user' }

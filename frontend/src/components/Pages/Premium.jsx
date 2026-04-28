@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCheck, FaArrowLeft, FaMusic, FaDownload, FaVolumeMute, FaRandom, FaHeadphones, FaCrown, FaUserFriends, FaChartLine, FaBolt } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const Premium = () => {
   const [billingCycle, setBillingCycle] = useState('monthly');
@@ -165,13 +166,6 @@ const Premium = () => {
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
-    // In a real app, this would navigate to payment processing
-    setTimeout(() => {
-      window.scrollTo({
-        top: document.getElementById('payment').offsetTop - 100,
-        behavior: 'smooth'
-      });
-    }, 100);
   };
 
   return (
@@ -298,93 +292,89 @@ const Premium = () => {
         </div>
       </section>
       
-      {/* Payment Section - Shown only when a plan is selected */}
+      {/* Payment Section Modal - Shown only when a plan is selected */}
       {selectedPlan && (
-        <section className="py-16 px-4">
-          <div className="max-w-2xl mx-auto bg-neutral-800 rounded-2xl p-8 border border-neutral-700">
-            <h2 className="text-2xl font-bold mb-8 pb-4 border-b border-neutral-700">Complete Your Subscription</h2>
-            
-            <div className="mb-6 p-4 bg-neutral-700/30 rounded-lg">
-              <h3 className="font-medium mb-2">Order Summary</h3>
-              <div className="flex justify-between mb-1">
-                <span className="text-white/70">Plan:</span>
-                <span>{selectedPlan.name} ({billingCycle})</span>
-              </div>
-              <div className="flex justify-between mb-1">
-                <span className="text-white/70">Price:</span>
-                <span>{selectedPlan.price}/{selectedPlan.period}</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-neutral-600 mt-2">
-                <span className="font-medium">Total:</span>
-                <span className="font-medium">{selectedPlan.price}</span>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="max-w-md w-full mx-auto bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 animate-fade-in-up">
+            {/* Payment Gateway Header */}
+            <div className="bg-[#60bb46] p-6 text-center relative">
+              <button 
+                onClick={() => setSelectedPlan(null)}
+                className="absolute left-4 top-6 text-white hover:text-gray-200 transition-colors"
+                title="Cancel Payment"
+              >
+                <FaArrowLeft size={20} />
+              </button>
+              <h2 className="text-2xl font-bold text-white tracking-wide flex items-center justify-center gap-2">
+                SewaPay <span className="text-xs bg-white text-[#60bb46] px-2 py-1 rounded-full font-bold shadow-sm">PRO</span>
+              </h2>
+              <p className="text-green-100 text-sm mt-1">Secure Digital Wallet</p>
             </div>
             
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1 text-white/80">Card Information</label>
-                <input
-                  type="text"
-                  placeholder="Card Number"
-                  className="w-full py-3 px-4 bg-neutral-700/30 border border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                />
+            <div className="p-8 text-black">
+              {/* Merchant Info */}
+              <div className="text-center mb-6">
+                <p className="text-gray-500 text-sm font-medium mb-1">Merchant</p>
+                <h3 className="text-xl font-bold text-gray-800">SoundLink Premium</h3>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              {/* Amount Details */}
+              <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-100 flex justify-between items-center shadow-inner">
                 <div>
-                  <input
-                    type="text"
-                    placeholder="MM/YY"
-                    className="w-full py-3 px-4 bg-neutral-700/30 border border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                  />
+                  <p className="text-gray-500 text-sm">Plan</p>
+                  <p className="font-semibold text-gray-800">{selectedPlan.name} ({billingCycle})</p>
                 </div>
-                <div>
-                  <input
-                    type="text"
-                    placeholder="CVC"
-                    className="w-full py-3 px-4 bg-neutral-700/30 border border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                  />
+                <div className="text-right">
+                  <p className="text-gray-500 text-sm">Amount</p>
+                  <p className="text-2xl font-bold text-[#60bb46]">{selectedPlan.price}</p>
                 </div>
               </div>
               
-              <div>
-                <label className="block text-sm font-medium mb-1 text-white/80">Name on Card</label>
-                <input
-                  type="text"
-                  placeholder="Full Name"
-                  className="w-full py-3 px-4 bg-neutral-700/30 border border-neutral-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
-                />
-              </div>
-              
-              <div className="flex items-center pt-4">
-                <input
-                  id="terms"
-                  type="checkbox"
-                  className="w-4 h-4 bg-neutral-700 border-neutral-600 rounded focus:ring-fuchsia-500"
-                />
-                <label htmlFor="terms" className="ml-2 text-sm text-white/70">
-                  I agree to the <span className="text-fuchsia-400 cursor-pointer">Terms of Service</span> and <span className="text-fuchsia-400 cursor-pointer">Privacy Policy</span>
-                </label>
-              </div>
-              
-              <div className="pt-4">
-                <button
-                  type="button"
-                  className="w-full py-3 font-bold rounded-lg bg-gradient-to-r from-pink-500 to-fuchsia-500 text-white hover:from-pink-600 hover:to-fuchsia-600 transition"
-                >
-                  Subscribe Now
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedPlan(null)}
-                  className="w-full py-3 font-medium text-white/70 hover:text-white mt-2"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+              {/* Login Form */}
+              <form className="space-y-5" onSubmit={(e) => {
+                e.preventDefault();
+                toast.success('Payment Successful via SewaPay!');
+                setSelectedPlan(null);
+              }}>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">SewaPay ID (Mobile Number)</label>
+                  <input
+                    type="text"
+                    required
+                    pattern="[0-9]{10}"
+                    title="Enter a valid 10-digit mobile number"
+                    placeholder="98XXXXXXXX"
+                    className="w-full py-3 px-4 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#60bb46] text-black transition-shadow"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">MPIN / Password</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Enter MPIN"
+                    className="w-full py-3 px-4 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#60bb46] text-black transition-shadow"
+                  />
+                </div>
+                
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    className="w-full py-3 font-bold rounded-lg bg-[#60bb46] text-white hover:bg-[#4ea035] transition-colors shadow-lg shadow-green-200/50 flex justify-center items-center gap-2"
+                  >
+                    Login & Pay
+                  </button>
+                </div>
+                <div className="text-center mt-4 border-t border-gray-100 pt-4">
+                  <p className="text-xs text-gray-500 flex items-center justify-center">
+                    <FaCheck className="text-[#60bb46] mr-1" /> Secure Payment Gateway By SewaPay
+                  </p>
+                </div>
+              </form>
+            </div>
           </div>
-        </section>
+        </div>
       )}
       
       {/* FAQ Section */}

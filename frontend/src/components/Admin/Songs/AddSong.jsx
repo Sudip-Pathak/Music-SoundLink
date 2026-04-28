@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { parseBlob } from 'music-metadata-browser';
 import { PlayerContext } from "../../../context/PlayerContext";
+import { AuthContext } from "../../../context/AuthContext";
 import Skeleton from "../../Skeleton";
 const url = import.meta.env.VITE_BACKEND_URL;
 
@@ -56,6 +57,7 @@ const ExportLrcFile = ({ lyrics, songName }) => {
 
 const AddSong = () => {
   const { formatLyricsWithTimestamps } = useContext(PlayerContext);
+  const { token } = useContext(AuthContext);
   const [image, setImage] = useState(null);
   const [song, setSong] = useState(null);
   const [name, setName] = useState("");
@@ -140,7 +142,11 @@ const AddSong = () => {
         formData.append("lyrics", lyrics);
       }
 
-      const res = await axios.post(`${url}/api/song/add`, formData);
+      const res = await axios.post(`${url}/api/song/add`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (res.data.success) {
         toast.success("Song added successfully!");
@@ -199,15 +205,21 @@ const AddSong = () => {
           <input
             type="file"
             id="song"
-            accept="audio/*"
+            accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/flac,video/mp4,.mp3,.mp4,.wav,.ogg,.m4a,.flac,.aac"
             hidden
             onChange={(e) => handleSongChange(e.target.files[0])}
           />
           <label htmlFor="song">
             {song ? (
-              <MdFileUpload className="w-24 h-24 text-fuchsia-500 mx-auto" />
+              <>
+                <MdFileUpload className="w-24 h-24 text-fuchsia-500 mx-auto" />
+                <p className="text-xs text-fuchsia-400 text-center mt-1 truncate max-w-[96px]">{song.name}</p>
+              </>
             ) : (
-              <MdFileUpload className="w-24 h-24 text-gray-400 mx-auto" />
+              <>
+                <MdFileUpload className="w-24 h-24 text-gray-400 mx-auto" />
+                <p className="text-xs text-gray-500 text-center mt-1">mp3 / mp4 / wav</p>
+              </>
             )}
           </label>
         </div>
@@ -218,25 +230,34 @@ const AddSong = () => {
           <input
             type="file"
             id="image"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
             hidden
             onChange={(e) => setImage(e.target.files[0])}
           />
           <label htmlFor="image">
             {image ? (
-              <img
-                src={URL.createObjectURL(image)}
-                className="w-24 h-24 object-cover rounded cursor-pointer"
-                alt="Upload Artwork"
-              />
+              <>
+                <img
+                  src={URL.createObjectURL(image)}
+                  className="w-24 h-24 object-cover rounded cursor-pointer"
+                  alt="Upload Artwork"
+                />
+                <p className="text-xs text-gray-500 text-center mt-1 truncate max-w-[96px]">{image.name}</p>
+              </>
             ) : extractedImage ? (
-              <img
-                src={URL.createObjectURL(extractedImage)}
-                className="w-24 h-24 object-cover rounded cursor-pointer"
-                alt="Extracted Artwork"
-              />
+              <>
+                <img
+                  src={URL.createObjectURL(extractedImage)}
+                  className="w-24 h-24 object-cover rounded cursor-pointer"
+                  alt="Extracted Artwork"
+                />
+                <p className="text-xs text-fuchsia-400 text-center mt-1">Auto-extracted</p>
+              </>
             ) : (
-              <MdMusicNote className="w-24 h-24 text-gray-400 mx-auto" />
+              <>
+                <MdMusicNote className="w-24 h-24 text-gray-400 mx-auto" />
+                <p className="text-xs text-gray-500 text-center mt-1">jpg / jpeg / png</p>
+              </>
             )}
           </label>
         </div>
@@ -306,7 +327,8 @@ const AddSong = () => {
       <div className="flex flex-col gap-2.5">
         <div className="flex justify-between items-center">
           <p>Song Lyrics (Optional)</p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            {/* Import .lrc lyrics file */}
             <input
               type="file"
               id="lrcFile"
@@ -335,6 +357,48 @@ const AddSong = () => {
             >
               <MdFileUpload />
               Import .lrc
+            </label>
+
+            {/* Import mp3 / mp4 audio file to set/replace the song */}
+            <input
+              type="file"
+              id="importAudioFile"
+              accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,video/mp4,.mp3,.mp4,.wav,.ogg,.m4a,.flac,.aac"
+              hidden
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  handleSongChange(e.target.files[0]);
+                  toast.success(`Audio file imported: ${e.target.files[0].name}`);
+                }
+              }}
+            />
+            <label
+              htmlFor="importAudioFile"
+              className="flex items-center gap-1 px-3 py-1 bg-fuchsia-700 text-white rounded-md text-sm hover:bg-fuchsia-800 transition-colors cursor-pointer"
+            >
+              <MdFileUpload />
+              Import Audio
+            </label>
+
+            {/* Import jpg / png image file to set/replace the cover */}
+            <input
+              type="file"
+              id="importImageFile"
+              accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
+              hidden
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setImage(e.target.files[0]);
+                  toast.success(`Cover image imported: ${e.target.files[0].name}`);
+                }
+              }}
+            />
+            <label
+              htmlFor="importImageFile"
+              className="flex items-center gap-1 px-3 py-1 bg-emerald-600 text-white rounded-md text-sm hover:bg-emerald-700 transition-colors cursor-pointer"
+            >
+              <MdFileUpload />
+              Import Image
             </label>
             
             {lyrics && <ExportLrcFile lyrics={lyrics} songName={name} />}

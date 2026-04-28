@@ -3,16 +3,16 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
-// // Get current directory
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// const uploadsDir = path.join(__dirname, "/../../uploads");
+// Get current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, "/../../uploads");
 
-// // Ensure uploads directory exists
-// if (!fs.existsSync(uploadsDir)) {
-//   fs.mkdirSync(uploadsDir, { recursive: true });
-//   console.log(`Created uploads directory: ${uploadsDir}`);
-// }
+// Ensure uploads directory exists
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log(`Created uploads directory: ${uploadsDir}`);
+}
 
 // Save file to local 'uploads' folder
 const storage = multer.diskStorage({
@@ -29,18 +29,18 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   // Check file type based on field name
   if (file.fieldname === "image" || file.fieldname === "coverImage") {
-    // Accept images only for image fields
+    // Accept images only: jpg, jpeg, png, gif, webp
     if (!file.originalname.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
       return cb(
-        new Error("Only image files are allowed for image uploads!"),
+        new Error("Only image files (jpg, jpeg, png, gif, webp) are allowed for image uploads!"),
         false,
       );
     }
   } else if (file.fieldname === "audio") {
-    // Accept audio files only for audio fields
-    if (!file.originalname.match(/\.(mp3|wav|ogg|m4a|flac|aac)$/i)) {
+    // Accept audio AND video files for audio fields (mp3, wav, ogg, m4a, flac, aac, mp4)
+    if (!file.originalname.match(/\.(mp3|wav|ogg|m4a|flac|aac|mp4)$/i)) {
       return cb(
-        new Error("Only audio files are allowed for audio uploads!"),
+        new Error("Only audio/video files (mp3, wav, ogg, m4a, flac, aac, mp4) are allowed for audio uploads!"),
         false,
       );
     }
@@ -52,7 +52,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 15 * 1024 * 1024, // 15MB limit (increased for audio files)
+    fileSize: 100 * 1024 * 1024, // 100MB limit (supports mp4 video files)
   },
 });
 

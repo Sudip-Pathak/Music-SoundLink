@@ -1,14 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
 import songModel from "../models/songModel.js";
-import dotenv from 'dotenv';
-dotenv.config();
-
-// Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_SECRET_KEY,
-});
+import fs from "fs";
+// Note: cloudinary is configured by connectCloudinary() in server.js
+// Do NOT call cloudinary.config() here — env vars aren't loaded yet at module import time
 
 const addSong = async (req, res) => {
   try {
@@ -18,35 +12,34 @@ const addSong = async (req, res) => {
     const artist = req.body.artist; // Add artist field
     const lyrics = req.body.lyrics; // Add lyrics field
 
-    // Check for files
+    // Check for audio file (required)
     if (!req.files || !req.files.audio || !req.files.audio[0]) {
       return res.status(400).json({ success: false, message: "Audio file missing" });
     }
-    if (!req.files || !req.files.image || !req.files.image[0]) {
-      return res.status(400).json({ success: false, message: "Image file missing" });
-    }
 
     const audioFile = req.files.audio[0];
-    const imageFile = req.files.image[0];
+    // Image is optional
+    const imageFile = req.files?.image?.[0] || null;
 
     // Log file info
-    console.log('Image file info:', {
-      originalname: imageFile.originalname,
-      mimetype: imageFile.mimetype,
-      size: imageFile.size,
-      path: imageFile.path
-    });
     console.log('Audio file info:', {
       originalname: audioFile.originalname,
       mimetype: audioFile.mimetype,
       size: audioFile.size,
       path: audioFile.path
     });
-
-    // Validate image MIME type
-    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedImageTypes.includes(imageFile.mimetype)) {
-      return res.status(400).json({ success: false, message: `Invalid image MIME type: ${imageFile.mimetype}` });
+    if (imageFile) {
+      console.log('Image file info:', {
+        originalname: imageFile.originalname,
+        mimetype: imageFile.mimetype,
+        size: imageFile.size,
+        path: imageFile.path
+      });
+      // Validate image MIME type only if image is provided
+      const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedImageTypes.includes(imageFile.mimetype)) {
+        return res.status(400).json({ success: false, message: `Invalid image MIME type: ${imageFile.mimetype}` });
+      }
     }
 
     // Check for Cloudinary configuration
@@ -58,24 +51,31 @@ const addSong = async (req, res) => {
     }
 
     try {
-      // Try to upload audio to Cloudinary
+      // Upload audio to Cloudinary (required)
       const audioUpload = await cloudinary.uploader.upload(audioFile.path, {
         resource_type: "video",
         folder: "soundlink/audio",
       });
-      // Try to upload image to Cloudinary
-      const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
-        resource_type: "image",
-        folder: "soundlink/images",
-      });
 
-      const duration = `${Math.floor(audioUpload.duration / 60)}:${Math.floor(audioUpload.duration % 60).toString().padStart(2, '0')}`;
+      // Upload image to Cloudinary only if provided
+      let imageUrl = "";
+      if (imageFile) {
+        const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
+          resource_type: "image",
+          folder: "soundlink/images",
+        });
+        imageUrl = imageUpload.secure_url;
+      }
+
+      // Safe duration calculation
+      const rawDuration = audioUpload.duration || 0;
+      const duration = `${Math.floor(rawDuration / 60)}:${Math.floor(rawDuration % 60).toString().padStart(2, '0')}`;
 
       const songData = {
         name,
-        desc,
-        album,
-        image: imageUpload.secure_url,
+        desc: desc || "",
+        album: album || "none",
+        image: imageUrl,
         file: audioUpload.secure_url,
         duration,
         createdBy: req.user.id,
@@ -86,14 +86,26 @@ const addSong = async (req, res) => {
       const song = songModel(songData);
       await song.save();
 
+      // Clean up temp files from disk after successful upload
+      try {
+        fs.unlinkSync(audioFile.path);
+        if (imageFile) fs.unlinkSync(imageFile.path);
+      } catch (cleanupErr) {
+        console.warn("Temp file cleanup warning:", cleanupErr.message);
+      }
+
       res.json({ success: true, message: "Song Added", song });
     } catch (cloudinaryError) {
       console.error("Cloudinary upload error (full):", cloudinaryError);
+      // Clean up temp files on error too
+      try {
+        fs.unlinkSync(audioFile.path);
+        if (imageFile) fs.unlinkSync(imageFile.path);
+      } catch (_) { /* ignore */ }
       return res.status(500).json({ 
         success: false, 
         error: "Cloudinary upload failed",
         details: cloudinaryError.message,
-        cloudinaryError
       });
     }
   } catch (error) {
